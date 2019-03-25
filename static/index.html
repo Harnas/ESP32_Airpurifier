@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Diy AirPurifer</title>
+<meta name="robots" content="index,follow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style type="text/css">
+
+html, body
+{
+    height: 100%;
+    margin:0;
+    padding:0;
+    background-color: #23232d;
+}
+
+p
+{
+    color: #fff;
+}
+h2
+{
+    color: #fff;
+}
+
+
+div.pagebox {
+    margin: 0 auto;
+    width: 80%;
+    max-width: 10cm;
+    display:table;
+}
+
+.pagebox input {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 1.3cm;
+  height: 0.7cm;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .1s;
+  transition: .1s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 0.5cm;
+  width: 0.5cm;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .1s;
+  transition: .1s;
+}
+
+input:checked + .slider {
+  background-color: #1448d8;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #1448d8;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(0.6cm);
+  -ms-transform: translateX(0.6cm);
+  transform: translateX(0.6cm);
+}
+
+.slider.round {
+  border-radius: 0.6cm;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.statusvalue {
+  float: left;
+  width: 33.33%;
+  padding: center;
+  background-color:#444;
+}
+
+
+.sensorvalue {
+  color: #fff;
+  size:1
+}
+
+
+.column {
+  float: left;
+  width: 50%;
+}
+
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+</style>
+
+</head>
+<body onload="updateData()">
+
+<div class="pagebox">
+
+    <div class="row">
+        <div class="column">
+            <p style="display:inline;">
+                Auto mode
+            </p>
+        </div>
+        <div class="column">
+            <label class="switch" style="float:right;">
+                <input id="modeSwitch" type="checkbox">
+                <span class="slider round"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="column">
+            <p>
+                Set the fan power:
+            </p>
+        </div>
+        <div class="column">
+            <p id="powerValue" style="float:right;">
+                0
+            </p>
+        </div>
+    </div>
+
+    <input type="range" min="0" max="100" value="0" step="1" class="slider" id="powerlevel">
+
+    <div class="statustable" id="statustable">
+
+    </div>
+</div>
+
+<script>
+// https://github.com/xorbit/wesp32-demos/blob/master/wesp32_light_server
+var settings = new Object();
+
+var slider = document.getElementById("powerlevel");
+var powerValue = document.getElementById("powerValue");
+modeSwitch = document.getElementById("modeSwitch");
+
+function drawData(data) {
+
+    var table = document.getElementById("statustable");
+    table.innerHTML = "";
+
+    for (var k in data) {
+        if (k.charAt(0) !== "_") {
+            addStatusItem(k, data[k]);
+        }
+
+    }
+
+    settings["_mode"] = data._mode;
+    settings["_auto_speed"] = data._auto_speed;
+    settings["_manual_speed"] = data._manual_speed;
+
+    if (settings["_mode"] === "A") {
+        modeSwitch.checked = true;
+        slider.value = settings["_auto_speed"];
+    }
+    else {
+        modeSwitch.checked = false;
+        slider.value = settings["_manual_speed"];
+    }
+
+    powerValue.innerHTML = slider.value;
+
+}
+
+function updateData() {
+    var req = new XMLHttpRequest();
+    req.open('GET', 'data', true);
+    req.responseType = 'json';
+    req.onload = function () {
+        drawData(req.response);
+    }
+    req.send();
+
+}
+
+function sendData() {
+    if (settings["_mode"] === "A") {
+        settings["_auto_speed"] = slider.value;
+    }
+    else {
+        settings["_manual_speed"] = slider.value;
+    }
+
+    if (modeSwitch.checked === true) {
+        settings["_mode"] = "A";
+        slider.value = settings["_auto_speed"];
+    }
+    else {
+        settings["_mode"] = "M";
+        slider.value = settings["_manual_speed"];
+    }
+    powerValue.innerHTML = slider.value;
+
+    var xhr = new XMLHttpRequest();
+    var url = "data";
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.responseType = 'json';
+    xhr.onreadystatechange = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            drawData(this.response);
+        }
+    };
+
+    xhr.send(JSON.stringify(settings));
+
+}
+
+modeSwitch.onchange = sendData
+slider.onchange = sendData
+
+function addStatusItem(key, val) {
+
+    switch (key) {
+        case "Temperature":
+            val = val.toFixed(2) + "°C";
+            break;
+        case "Humidity":
+            val = val.toFixed(2) + "%";
+            break;
+        case "Pressure":
+            val = val;
+            break;
+        case "Dust":
+            val = val.toFixed(2) + "ug/m3";
+            break;
+        case "Power":
+            val = val + "%";
+            break;
+        case "Fan":
+            val = val + "%";
+            break;
+    }
+
+    var table = document.getElementById("statustable");
+    var el = document.createElement("div");
+    el.setAttribute('class', "statusvalue");
+
+    var f = document.createElement("font");
+    f.setAttribute('class', "sensorvalue");
+    var t = document.createTextNode(key + ":");
+    f.appendChild(t);
+    el.appendChild(f);
+    var br = document.createElement("br");
+    el.appendChild(br);
+
+    var f = document.createElement("font");
+    f.setAttribute('class', "sensorvalue");
+    var t = document.createTextNode(val);
+    f.appendChild(t);
+    el.appendChild(f);
+
+    table.appendChild(el);
+}
+setInterval(updateData, 5000);
+</script>
+</body>
+</html>
+
