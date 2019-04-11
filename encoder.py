@@ -55,7 +55,7 @@ class Encoder(object):
         self.set_callbacks(self._callback)
 
     def _callback_sw(self, line):
-        self.button_event_callback()
+        self.button_event_callback(line)
 
     def _callback(self, line):
         self._readings = (self._readings << 2 | self.pin_clk.value() << 1 |

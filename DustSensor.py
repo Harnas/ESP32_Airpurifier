@@ -29,11 +29,10 @@ class DustSensor:
         self.led.value(0)
         utime.sleep_us(270)
         self.raw = self.adc.read()
-        #utime.sleep_us(40)
         self.Vref = self.ref.read()
         self.led.value(1)
 
-        self.raw = self.raw * 1650 / self.Vref
+        self.raw = self.raw * 1980 / self.Vref
         self.start = utime.ticks_us()
         return self.raw
 

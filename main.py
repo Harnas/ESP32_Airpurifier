@@ -95,20 +95,22 @@ def dust_sensor_thread():
 encoder_button_event_time = 0
 
 
-def encoder_button_event():
+def encoder_button_event(line):
     global encoder_button_event_time
-    if (utime.ticks_ms() - encoder_button_event_time) > 1000:
-        if settings.settings['mode'] == 'M':
-            settings.settings['mode'] = 'A'
-        else:
-            settings.settings['mode'] = 'M'
+    if line.value() == 0:
+        if (utime.ticks_ms() - encoder_button_event_time) > 1000:
+            if settings.settings['mode'] == 'M':
+                settings.settings['mode'] = 'A'
+            else:
+                settings.settings['mode'] = 'M'
+
     encoder_button_event_time = utime.ticks_ms()
 
 
 board_button_event_time = 0
 
 
-def board_button_event():
+def board_button_event(line):
     global board_button_event_time
     if (utime.ticks_ms() - board_button_event_time) > 1000:
         main_controller.save_settings()
@@ -137,7 +139,7 @@ def read_sensors(sensors_values):
     i2c_sensors_read(sensors_values)
     for i in range(30):
         dust_sensor.measure_average_quick()
-        utime.sleep_us(11000)
+        utime.sleep_us(9700)
 
     adc_read, calcVoltage, dustDensity = dust_sensor.get_average()
     sensors_values["dust_level"] = dustDensity
@@ -264,6 +266,7 @@ if __name__ == "__main__":
     oled.fill(0)
     oled.show()
 
+    row_height = 10
 
     while True:
         ipadd = wifi_maintenance()
@@ -275,15 +278,13 @@ if __name__ == "__main__":
         line = 0
         oled.text("{:2.2f}C   {:3.2f}%".format(main_controller.temperature, main_controller.humidity),
                   0, line)
-        line += 8
+        line += row_height
         oled.text("%s" % main_controller.air_pressure, 0, line)
-        line += 8
+        line += row_height
         oled.text("PM: %.1fug/m3" % main_controller.dust_level, 0, line)
-        line += 8
-        line += 8
+        line += round(1.5*row_height)
         oled.text("Set:%d Fan:%d %s" % (main_controller.fan_power, fan.power, settings.settings['mode']), 0, line)
-        line += 8
-        line += 8
+        line += round(1.5*row_height)
         oled.text(ipadd[0], 0, line)
         oled.show()
 
