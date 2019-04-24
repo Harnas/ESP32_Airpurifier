@@ -154,6 +154,7 @@ def read_sensors(sensors_values):
 
 
 server = None
+
 if __name__ == "__main__":
     Button_pin = 4
     LED_pin = 2
@@ -241,13 +242,19 @@ if __name__ == "__main__":
             elif data['_mode'] == 'M':
                 settings.settings['mode'] = 'M'
 
+            if data['_display_on'] == 'true':
+                settings.display_on = True
+            elif data['_display_on'] == 'false':
+                settings.display_on = False
+
             settings.settings['manual_speed'] = min(100, max(0, int(data["_manual_speed"])))
             settings.settings['set_speed'] = min(100, max(0, int(data["_auto_speed"])))
 
         sensors_values = {"Temperature": main_controller.temperature, "Humidity": main_controller.humidity,
                           "Pressure": main_controller.air_pressure, "Dust": main_controller.dust_level,
                           "Power": main_controller.fan_power, "Fan": fan.power, "_mode": settings.settings['mode'],
-                          "_manual_speed": settings.settings['manual_speed'], "_auto_speed": settings.settings['set_speed']}
+                          "_manual_speed": settings.settings['manual_speed'], "_auto_speed": settings.settings['set_speed'],
+                          "_display_on": settings.display_on}
 
         encoded = ujson.dumps(sensors_values)
         yield from picoweb.start_response(resp, content_type="application/json")
@@ -274,18 +281,23 @@ if __name__ == "__main__":
         main_controller.read_sensors()
         fan.set(main_controller.fan_speed())
 
-        oled.fill(0)
-        line = 0
-        oled.text("{:2.2f}C   {:3.2f}%".format(main_controller.temperature, main_controller.humidity),
-                  0, line)
-        line += row_height
-        oled.text("%s" % main_controller.air_pressure, 0, line)
-        line += row_height
-        oled.text("PM: %.1fug/m3" % main_controller.dust_level, 0, line)
-        line += round(1.5*row_height)
-        oled.text("Set:%d Fan:%d %s" % (main_controller.fan_power, fan.power, settings.settings['mode']), 0, line)
-        line += round(1.5*row_height)
-        oled.text(ipadd[0], 0, line)
-        oled.show()
+        if settings.display_on:
+            oled.fill(0)
+            line = 0
+            oled.text("{:2.2f}C   {:3.2f}%".format(main_controller.temperature, main_controller.humidity),
+                      0, line)
+            line += row_height
+            oled.text("%s" % main_controller.air_pressure, 0, line)
+            line += row_height
+            oled.text("PM: %.1fug/m3" % main_controller.dust_level, 0, line)
+            line += round(1.5*row_height)
+            oled.text("Set:%d Fan:%d %s" % (main_controller.fan_power, fan.power, settings.settings['mode']), 0, line)
+            line += round(1.5*row_height)
+            oled.text(ipadd[0], 0, line)
+            oled.show()
+        else:
+            oled.fill(0)
+            oled.show()
+
 
         utime.sleep_ms(500)

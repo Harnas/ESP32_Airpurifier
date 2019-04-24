@@ -20,4 +20,4 @@ Before first run:
 ```
 The webpanel is on: http://espressif.lan:8081/
 
-More description is on https://forbot.pl
+More description on https://forbot.pl/forum/topic/15995-oczyszczacz-powietrza/

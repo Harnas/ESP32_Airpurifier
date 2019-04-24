@@ -5,6 +5,7 @@ class Settings:
     def __init__(self, settings_filename):
         self.settings_filename = settings_filename
         self.settings = {}
+        self.display_on = True
 
     def save_settings(self):
 

@@ -147,6 +147,24 @@ input:checked + .slider:before {
     <div class="row">
         <div class="column">
             <p>
+                Embedded display
+            </p>
+        </div>
+        <div class="column">
+            <p>
+            </p>
+        </div>
+        <div class="column">
+            <label class="switch" style="float:right;">
+                <input id="displaySwitch" type="checkbox">
+                <span class="slider round"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="column">
+            <p>
                 Set the fan power:
             </p>
         </div>
@@ -168,13 +186,9 @@ input:checked + .slider:before {
 // https://github.com/xorbit/wesp32-demos/blob/master/wesp32_light_server
 var settings = new Object();
 
-var slider = document.getElementById("powerlevel");
-var powerValue = document.getElementById("powerValue");
-modeSwitch = document.getElementById("modeSwitch");
-
 function drawData(data) {
 
-    var table = document.getElementById("statustable");
+    var table = statustable
     table.innerHTML = "";
 
     for (var k in data) {
@@ -187,17 +201,26 @@ function drawData(data) {
     settings["_mode"] = data._mode;
     settings["_auto_speed"] = data._auto_speed;
     settings["_manual_speed"] = data._manual_speed;
+    settings["_display_on"] = data._display_on;
 
     if (settings["_mode"] === "A") {
         modeSwitch.checked = true;
-        slider.value = settings["_auto_speed"];
+        powerlevel.value = settings["_auto_speed"];
     }
     else {
         modeSwitch.checked = false;
-        slider.value = settings["_manual_speed"];
+        powerlevel.value = settings["_manual_speed"];
     }
 
-    powerValue.innerHTML = slider.value;
+
+    if (settings["_display_on"] == true) {
+        displaySwitch.checked = true;
+    }
+    else {
+        displaySwitch.checked = false;
+    }
+
+    powerValue.innerHTML = powerlevel.value;
 
 }
 
@@ -214,21 +237,29 @@ function updateData() {
 
 function sendData() {
     if (settings["_mode"] === "A") {
-        settings["_auto_speed"] = slider.value;
+        settings["_auto_speed"] = powerlevel.value;
     }
     else {
-        settings["_manual_speed"] = slider.value;
+        settings["_manual_speed"] = powerlevel.value;
     }
 
     if (modeSwitch.checked === true) {
         settings["_mode"] = "A";
-        slider.value = settings["_auto_speed"];
+        powerlevel.value = settings["_auto_speed"];
     }
     else {
         settings["_mode"] = "M";
-        slider.value = settings["_manual_speed"];
+        powerlevel.value = settings["_manual_speed"];
     }
-    powerValue.innerHTML = slider.value;
+
+    if (displaySwitch.checked === true) {
+        settings["_display_on"] = "true";
+    }
+    else {
+        settings["_display_on"] = "false";
+    }
+
+    powerValue.innerHTML = powerlevel.value;
 
     var xhr = new XMLHttpRequest();
     var url = "data";
@@ -246,7 +277,8 @@ function sendData() {
 }
 
 modeSwitch.onchange = sendData
-slider.onchange = sendData
+powerlevel.onchange = sendData
+displaySwitch.onchange = sendData
 
 function addStatusItem(key, val) {
 
@@ -271,7 +303,7 @@ function addStatusItem(key, val) {
             break;
     }
 
-    var table = document.getElementById("statustable");
+    var table = statustable
     var el = document.createElement("div");
     el.setAttribute('class', "statusvalue");
 
